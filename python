@@ -1,0 +1,57 @@
+import pandas as pd
+import yfinance as yf
+
+# Download historical data
+data = yf.download('AAPL', start='2010-01-01', end='2022-12-31')
+
+# Display the first few rows of the data
+print(data.head())
+
+# Create a new column 'Target' shifted one day ahead
+data['Target'] = data['Close'].shift(-1)
+
+# Drop the last row (since it has no target)
+data = data[:-1]
+
+# Display the first few rows of the data
+print(data.head())
+
+
+from keras.models import Sequential
+from keras.layers import LSTM, Dense
+
+# Define the LSTM model
+model = Sequential()
+model.add(LSTM(50, return_sequences=True, input_shape=(data.shape[1], 1)))
+model.add(LSTM(50, return_sequences=False))
+model.add(Dense(25))
+model.add(Dense(1))
+
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Reshape the data to 3D for LSTM
+X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+
+# Train the model
+model.fit(X_train, y_train, batch_size=1, epochs=1)
+
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+# Make predictions on the test data
+y_pred = model.predict(X_test)
+
+# Calculate the evaluation metrics
+mae = mean_absolute_error(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+
+# Print the evaluation metrics
+print(f'MAE: {mae:.2f}')
+print(f'RMSE: {rmse:.2f}')
+
+
+# Predict the stock price for the next day
+next_day_price = model.predict(np.array(data[-1:]).reshape(1, data.shape[1], 1))
+
+print(f'Predicted stock price for the next day: {next_day_price[0][0]:.2f}')
